@@ -1,0 +1,237 @@
+name: Build macOS
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Tipo de build"
+        required: false
+        default: "universal"
+        type: choice
+        options:
+          - universal
+          - arm64
+          - x86_64
+
+jobs:
+  build-arch:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            runner: macos-14
+          - arch: x86_64
+            runner: macos-13
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    steps:
+      - name: Decide whether to build this arch
+        id: gate
+        shell: bash
+        run: |
+          MODE="${{ inputs.mode }}"
+          ARCH="${{ matrix.arch }}"
+          if [ "$MODE" = "universal" ] || [ "$MODE" = "$ARCH" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.run == 'true'
+
+      - name: Set up Python
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        if: steps.gate.outputs.run == 'true'
+        env:
+          ARCHFLAGS: ${{ matrix.arch == 'x86_64' && '-arch x86_64' || '-arch arm64' }}
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install pyinstaller
+
+      - name: Build macOS app
+        if: steps.gate.outputs.run == 'true'
+        env:
+          BPT_TARGET_ARCH: ${{ matrix.arch }}
+        run: |
+          python compilar_macos.py --target-arch "$BPT_TARGET_ARCH"
+
+      - name: Upload arch artifact
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: BPTConverter-macOS-${{ matrix.arch }}
+          path: |
+            dist_macos/**
+          if-no-files-found: error
+
+  merge-universal:
+    if: ${{ inputs.mode == 'universal' }}
+    needs: build-arch
+    runs-on: macos-14
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: BPTConverter-macOS-arm64
+          path: dist-arm64
+
+      - name: Download x86_64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: BPTConverter-macOS-x86_64
+          path: dist-x86_64
+
+      - name: Merge universal app and portable
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, shutil, subprocess, sys
+          from pathlib import Path
+
+          ROOT = Path.cwd()
+          ARM = ROOT / 'dist-arm64'
+          X64 = ROOT / 'dist-x86_64'
+          OUT = ROOT / 'dist_macos'
+          APP = 'BPT Converter.app'
+          PORTABLE = 'BPTConverter_Portable'
+
+          if OUT.exists():
+              shutil.rmtree(OUT)
+          OUT.mkdir(parents=True)
+
+          def is_macho(path: Path) -> bool:
+              if not path.is_file() or path.is_symlink():
+                  return False
+              try:
+                  out = subprocess.check_output(['file', '-b', str(path)], text=True, errors='ignore')
+              except Exception:
+                  return False
+              return 'Mach-O' in out
+
+          def lipo_merge(a: Path, b: Path, dest: Path) -> bool:
+              dest.parent.mkdir(parents=True, exist_ok=True)
+              if dest.exists() or dest.is_symlink():
+                  dest.unlink() if dest.is_symlink() or dest.is_file() else shutil.rmtree(dest)
+              try:
+                  subprocess.check_call(['lipo', '-create', str(a), str(b), '-output', str(dest)])
+                  # Preserve executable bit when possible
+                  try:
+                      dest.chmod(a.stat().st_mode)
+                  except Exception:
+                      pass
+                  return True
+              except Exception as e:
+                  print(f'WARN: lipo failed for {a}: {e}; copying arm64 version')
+                  shutil.copy2(a, dest)
+                  return False
+
+          def merge_tree(arm: Path, x64: Path, out: Path) -> None:
+              if arm.is_dir() and not arm.is_symlink():
+                  out.mkdir(parents=True, exist_ok=True)
+                  x64_entries = {p.name: p for p in x64.iterdir()} if x64.exists() else {}
+                  for child in arm.iterdir():
+                      other = x64_entries.get(child.name)
+                      merge_tree(child, other if other else child.with_name('__MISSING__'), out / child.name)
+                  # Copy x86-only entries not present in arm
+                  if x64.exists():
+                      for child in x64.iterdir():
+                          target = out / child.name
+                          if not target.exists():
+                              if child.is_dir() and not child.is_symlink():
+                                  shutil.copytree(child, target, symlinks=True)
+                              else:
+                                  target.parent.mkdir(parents=True, exist_ok=True)
+                                  shutil.copy2(child, target, follow_symlinks=False)
+                  return
+
+              if arm.is_symlink():
+                  out.parent.mkdir(parents=True, exist_ok=True)
+                  if out.exists() or out.is_symlink():
+                      out.unlink()
+                  os.symlink(os.readlink(arm), out)
+                  return
+
+              if not arm.exists():
+                  # x64-only
+                  src = x64
+                  out.parent.mkdir(parents=True, exist_ok=True)
+                  if src.is_dir() and not src.is_symlink():
+                      shutil.copytree(src, out, symlinks=True)
+                  elif src.exists():
+                      shutil.copy2(src, out, follow_symlinks=False)
+                  return
+
+              out.parent.mkdir(parents=True, exist_ok=True)
+              if x64.exists() and is_macho(arm) and is_macho(x64):
+                  lipo_merge(arm, x64, out)
+              else:
+                  shutil.copy2(arm, out, follow_symlinks=False)
+                  try:
+                      out.chmod(arm.stat().st_mode)
+                  except Exception:
+                      pass
+
+          # Merge .app
+          arm_app = ARM / APP
+          x64_app = X64 / APP
+          if not arm_app.exists() or not x64_app.exists():
+              raise SystemExit(f'Faltan apps para merge: {arm_app.exists()} {x64_app.exists()}')
+          merge_tree(arm_app, x64_app, OUT / APP)
+
+          # Merge portable
+          arm_port = ARM / PORTABLE
+          x64_port = X64 / PORTABLE
+          if arm_port.exists() and x64_port.exists() and is_macho(arm_port) and is_macho(x64_port):
+              lipo_merge(arm_port, x64_port, OUT / PORTABLE)
+          elif arm_port.exists():
+              shutil.copy2(arm_port, OUT / PORTABLE)
+
+          # Copy readme/docs if present
+          for name in ['LEEME.txt', 'README.md', 'LEEME_PRIMERO.txt']:
+              for base in [ARM, X64]:
+                  p = base / name
+                  if p.exists() and not (OUT / name).exists():
+                      shutil.copy2(p, OUT / name)
+
+          # Verify key binaries
+          for p in [OUT / APP / 'Contents' / 'MacOS' / 'BPT Converter', OUT / PORTABLE]:
+              if p.exists():
+                  print('==', p)
+                  subprocess.call(['file', str(p)])
+                  subprocess.call(['lipo', '-info', str(p)])
+          PY
+
+      - name: Create universal DMG
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP="dist_macos/BPT Converter.app"
+          DMG="dist_macos/BPTConverter-1.2-macOS-universal2.dmg"
+          STAGE="build_macos/dmg-staging"
+          rm -rf "$STAGE"
+          mkdir -p "$STAGE"
+          cp -R "$APP" "$STAGE/"
+          ln -s /Applications "$STAGE/Applications" || true
+          rm -f "$DMG"
+          hdiutil create -volname "BPT Converter" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
+          rm -rf "$STAGE"
+
+      - name: Upload universal artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BPTConverter-macOS-universal2
+          path: |
+            dist_macos/**
+          if-no-files-found: error

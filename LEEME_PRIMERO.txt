@@ -1,0 +1,57 @@
+BPT CONVERTER 1.2
+============================
+Archivos listos para compartir con otras personas.
+
+WINDOWS
+-------
+1) INSTALADOR (RECOMENDADO)
+   Archivo: Instalador_ConvertidorFormatos_1.2.exe
+
+   - Haz doble clic y sigue el asistente.
+   - Puedes elegir "Solo para mí" (no pide administrador) o
+     "Para todos los usuarios" (pide administrador).
+   - Crea accesos directos y desinstalador.
+   - No necesita Python, FFmpeg ni conexión a internet.
+
+2) VERSIÓN PORTABLE (OPCIONAL)
+   Archivo: ConvertidorFormatos_Portable.exe
+
+   - Un solo archivo que se ejecuta sin instalar.
+   - Útil si no puedes instalar programas en el equipo.
+
+macOS
+-----
+- El código ya incluye soporte macOS (rutas, apertura de archivos, FFmpeg,
+  lanzadores y script de compilación).
+- PyInstaller NO puede generar apps macOS desde Windows. Para obtener
+  `BPT Converter.app` / `.dmg`, compila en macOS:
+    ./instalar_macos.sh --build
+    .venv/bin/python compilar_macos.py
+- También puedes usar el workflow de GitHub Actions incluido en
+  `.github/workflows/build-macos.yml` en un runner macos-latest.
+- Para distribución pública en Mac, firma y notariza la app con Apple
+  Developer (requiere macOS).
+
+REQUISITOS
+----------
+- Windows 10/11 64 bits, o macOS (para ejecutar/compilar el paquete Mac).
+- Nada más en los paquetes empaquetados: todo lo necesario va incluido.
+
+SI WINDOWS MUESTRA UN AVISO
+---------------------------
+El programa no tiene firma digital (hace falta un certificado de pago).
+Si aparece "Windows protegió tu equipo":
+  1. Pulsa "Más información".
+  2. Pulsa "Ejecutar de todas formas".
+
+Si un antivirus corporativo bloquea el archivo, pide a informática que
+autorice el instalador o usa la versión portable.
+
+VERIFICAR LOS ARCHIVOS
+----------------------
+En SHA256SUMS.txt están las huellas SHA-256. En PowerShell puedes
+comprobarlas con:
+
+  Get-FileHash "Instalador_ConvertidorFormatos_1.2.exe" -Algorithm SHA256
+
+La huella debe coincidir exactamente con la del archivo de sumas.

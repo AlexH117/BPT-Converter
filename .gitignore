@@ -1,0 +1,28 @@
+# Entornos y caché Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Builds / empaquetado
+build/
+build_macos/
+dist/
+dist_macos/
+*.spec.bak
+
+# Logs y archivos locales
+errores.log
+*.log
+
+# Sistema / editores
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Archivos temporales
+*.tmp
+*.temp

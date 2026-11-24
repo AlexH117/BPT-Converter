@@ -1,0 +1,61 @@
+BPT Converter 1.2
+============================
+
+Convierte imágenes, vídeo y audio entre formatos, y permite cambiar la
+resolución sin perder calidad. Disponible para Windows y macOS.
+
+USO (Windows)
+-------------
+1. Abre "BPT Converter" desde el menú Inicio o el acceso directo.
+2. Arrastra los archivos o carpetas a la ventana (o usa "Agregar archivos").
+3. Elige el formato de salida y, si quieres, una resolución.
+4. Pulsa "Convertir".
+
+USO (macOS, modo desarrollo)
+----------------------------
+1. Ejecuta ./instalar_macos.sh la primera vez.
+2. Abre ./Convertidor.command.
+3. Arrastra archivos, elige formato/resolución y pulsa "Convertir".
+
+No hace falta instalar Python, FFmpeg ni ninguna otra librería en los paquetes
+empaquetados (Windows .exe / macOS .app).
+
+FORMATOS
+--------
+Imágenes : HEIC, JPG, PNG, WEBP, AVIF, TIFF, BMP, GIF
+Vídeo    : MOV, MP4, AVI, MKV, WEBM, WMV, FLV, MPEG
+Audio    : MP3, WAV, M4A, AAC, FLAC, OGG, OPUS
+
+CONSEJOS
+--------
+- Para cambiar solo la resolución, elige el mismo formato de salida.
+- Los presets de resolución (4K, Full HD, 50 %, etc.) nunca agrandan la
+  imagen o el vídeo original.
+- Para fotos, usa calidad Alta (95). Para vídeo, CRF 20 o 23.
+
+DESCARGA DESDE YOUTUBE
+---------------------
+- En la ventana, pega una URL de YouTube (por ejemplo
+  https://www.youtube.com/watch?v=XXXXXXXXXXX) en el campo
+  "Descargar desde YouTube" y pulsa "Agregar URL".
+- La URL se agrega a la lista con el estado "Pendiente" y se convierte
+  junto con los archivos (o sola si es la única).
+- Elige el formato de salida: MP4/MKV/WEBM/AVI para vídeo descargado, o
+  MP3/WAV/FLAC/OGG/OPUS para extraer solo el audio.
+- Con "AUTO" la descarga se convierte a MP4.
+- El resultado se guarda en la carpeta elegida ("Guardar en"); si no se
+  elige otra, va a "Videos\BPT Converter" (Windows) o "Movies/BPT Converter" (macOS).
+
+NOTAS
+-----
+- La descarga de YouTube se hace con la librería "yt-dlp" y el audio con
+  FFmpeg; todo va incluido en la aplicación (en desarrollo, en el venv).
+- Se necesita conexión a internet para descargar.
+- Si algo falla, cierra la aplicación y vuelve a abrirla. También puedes
+  desinstalarla desde "Configuración > Aplicaciones" de Windows.
+
+AVISO DE WINDOWS
+----------------
+Este programa no tiene firma digital. Si Windows muestra "Windows protegió
+tu equipo", pulsa "Más información" y luego "Ejecutar de todas formas".
+Es normal en programas pequeños sin certificado de firma.

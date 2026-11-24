@@ -1,0 +1,44 @@
+BPT CONVERTER 1.2
+============================
+Archivos listos para compartir con otras personas.
+
+1) INSTALADOR (RECOMENDADO)
+   Archivo: Instalador_ConvertidorFormatos_1.2.exe
+
+   - Haz doble clic y sigue el asistente.
+   - Puedes elegir "Solo para mí" (no pide administrador) o
+     "Para todos los usuarios" (pide administrador).
+   - Crea accesos directos en el menú Inicio y, si lo marcas, en el
+     escritorio. También añade un desinstalador.
+   - No necesita Python, FFmpeg ni conexión a internet.
+
+2) VERSIÓN PORTABLE (OPCIONAL)
+   Archivo: ConvertidorFormatos_Portable.exe
+
+   - Un solo archivo que se ejecuta sin instalar.
+   - Tarda unos segundos más en abrir porque se descomprime cada vez.
+   - Útil si no puedes instalar programas en el equipo.
+
+REQUISITOS
+----------
+- Windows 10 u 11, 64 bits.
+- Nada más: todo lo necesario va dentro del programa.
+
+SI WINDOWS MUESTRA UN AVISO
+---------------------------
+El programa no tiene firma digital (hace falta un certificado de pago).
+Si aparece "Windows protegió tu equipo":
+  1. Pulsa "Más información".
+  2. Pulsa "Ejecutar de todas formas".
+
+Si un antivirus corporativo bloquea el archivo, pide a informática que
+autorice el instalador o usa la versión portable.
+
+VERIFICAR LOS ARCHIVOS
+----------------------
+En SHA256SUMS.txt están las huellas SHA-256. En PowerShell puedes
+comprobarlas con:
+
+  Get-FileHash "Instalador_ConvertidorFormatos_1.2.exe" -Algorithm SHA256
+
+La huella debe coincidir exactamente con la del archivo de sumas.
