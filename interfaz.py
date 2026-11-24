@@ -167,7 +167,7 @@ class Aplicacion:
         x = max(0, (self.raiz.winfo_screenwidth() - ancho) // 2)
         y = max(0, (self.raiz.winfo_screenheight() - alto) // 2 - 20)
         self.raiz.geometry(f"{ancho}x{alto}+{x}+{y}")
-        self.raiz.minsize(1000, 700)
+        self.raiz.minsize(980, 640)
 
         icono = BASE / "icono.ico"
         if icono.exists() and os.name == "nt":
@@ -325,9 +325,47 @@ class Aplicacion:
         izquierda.columnconfigure(0, weight=1)
         izquierda.rowconfigure(4, weight=1)
 
-        derecha = tk.Frame(workspace, bg=CANVAS)
-        derecha.grid(row=0, column=1, sticky="nsew", padx=(8, 16), pady=12)
+        derecha_contenedor = tk.Frame(workspace, bg=CANVAS)
+        derecha_contenedor.grid(row=0, column=1, sticky="nsew", padx=(8, 16), pady=12)
+        derecha_contenedor.columnconfigure(0, weight=1)
+        derecha_contenedor.rowconfigure(0, weight=1)
+
+        canvas_derecha = tk.Canvas(derecha_contenedor, bg=CANVAS, highlightthickness=0, bd=0)
+        scroll_derecha = ttk.Scrollbar(derecha_contenedor, orient="vertical", command=canvas_derecha.yview)
+        canvas_derecha.configure(yscrollcommand=scroll_derecha.set)
+        canvas_derecha.grid(row=0, column=0, sticky="nsew")
+        scroll_derecha.grid(row=0, column=1, sticky="ns")
+
+        derecha = tk.Frame(canvas_derecha, bg=CANVAS)
         derecha.columnconfigure(0, weight=1)
+        ventana_derecha = canvas_derecha.create_window((0, 0), window=derecha, anchor="nw")
+
+        def _ajustar_scroll_derecha(_evento=None):
+            canvas_derecha.configure(scrollregion=canvas_derecha.bbox("all"))
+            canvas_derecha.itemconfigure(ventana_derecha, width=canvas_derecha.winfo_width())
+
+        derecha.bind("<Configure>", _ajustar_scroll_derecha)
+        canvas_derecha.bind("<Configure>", _ajustar_scroll_derecha)
+
+        def _wheel_derecha(event):
+            if canvas_derecha.winfo_exists():
+                delta = int(-1 * (event.delta / 120)) if event.delta else (1 if event.num == 5 else -1)
+                canvas_derecha.yview_scroll(delta, "units")
+
+        def _bind_wheel_derecha(_event=None):
+            canvas_derecha.bind_all("<MouseWheel>", _wheel_derecha)
+            canvas_derecha.bind_all("<Button-4>", _wheel_derecha)
+            canvas_derecha.bind_all("<Button-5>", _wheel_derecha)
+
+        def _unbind_wheel_derecha(_event=None):
+            canvas_derecha.unbind_all("<MouseWheel>")
+            canvas_derecha.unbind_all("<Button-4>")
+            canvas_derecha.unbind_all("<Button-5>")
+
+        canvas_derecha.bind("<Enter>", _bind_wheel_derecha)
+        canvas_derecha.bind("<Leave>", _unbind_wheel_derecha)
+        derecha.bind("<Enter>", _bind_wheel_derecha)
+        derecha.bind("<Leave>", _unbind_wheel_derecha)
 
         # ---------- Panel izquierdo: archivos de origen ----------
         cab_origen = tk.Frame(izquierda, bg=CANVAS)
@@ -415,10 +453,10 @@ class Aplicacion:
         contenedor = ttk.Frame(archivos_card)
         self.contenedor_tree = contenedor
         contenedor.grid(row=1, column=0, sticky="nsew")
-        self.tree = ttk.Treeview(contenedor, columns=columnas,
-                                 show="headings", selectmode="extended")
         contenedor.columnconfigure(0, weight=1)
         contenedor.rowconfigure(0, weight=1)
+        self.tree = ttk.Treeview(contenedor, columns=columnas,
+                                 show="headings", selectmode="extended")
         self.tree.grid(row=0, column=0, sticky="nsew")
         self.tree.heading("archivo", text="Archivo")
         self.tree.heading("tipo", text="Tipo")
@@ -428,11 +466,11 @@ class Aplicacion:
         self.tree.column("tipo", width=80, anchor="center", stretch=False)
         self.tree.column("tamano", width=90, anchor="e", stretch=False)
         self.tree.column("estado", width=130, anchor="w", stretch=False)
-        self.tree.grid_forget()
 
         self.barra_v = ttk.Scrollbar(contenedor, orient="vertical", command=self.tree.yview)
         self.barra_v.grid(row=0, column=1, sticky="ns")
         self.tree.configure(yscrollcommand=self.barra_v.set)
+        contenedor.grid_forget()
 
         self.tree.tag_configure("ok", foreground=OK, background=OK_BG)
         self.tree.tag_configure("error", foreground=BAD, background=BAD_BG)
@@ -469,10 +507,7 @@ class Aplicacion:
         self.combo_formato.bind("<<ComboboxSelected>>", self._marcar_formato_manual)
         self.lbl_formatos = ttk.Label(
             formato_card,
-            text="AUTO convierte cada archivo a su formato recomendado (JPG / MP4 / MP3).\n"
-                 "Imagen: JPG · PNG · WEBP · AVIF · TIFF · BMP · GIF    |    "
-                 "Vídeo: MP4 · MOV · AVI · MKV · WEBM · WMV · FLV · MPEG    |    "
-                 "Audio: MP3 · WAV · M4A · AAC · FLAC · OGG · OPUS",
+            text="AUTO selecciona JPG / MP4 / MP3 según el tipo de archivo.",
             style="Sub.TLabel", wraplength=430, justify="left",
         )
         self.lbl_formatos.grid(row=2, column=0, sticky="w", pady=(8, 0))
@@ -758,21 +793,21 @@ class Aplicacion:
     @staticmethod
     def _categoria_de(valor) -> str | None:
         """Categoría de un archivo o de una URL de YouTube."""
-        if isinstance(value, str) and cv.es_url_youtube(value):
+        if isinstance(valor, str) and cv.es_url_youtube(valor):
             return "video"
-        return cv.categoria_archivo(value)
+        return cv.categoria_archivo(valor)
 
     def _actualizar_resumen(self) -> None:
         total = len(self.archivos)
         if total == 0:
             self.lbl_resumen.configure(text="No hay archivos en la lista.")
-            self.lbl_vacio.grid()
+            self.lbl_vacio.grid(row=1, column=0, sticky="nsew")
+            self.tree.grid_forget()
             self.contenedor_tree.grid_forget()
-            self.barra_v.grid_forget()
         else:
             self.lbl_vacio.grid_forget()
             self.contenedor_tree.grid(row=1, column=0, sticky="nsew")
-            self.barra_v.grid(row=1, column=1, sticky="ns")
+            self.tree.grid(row=0, column=0, sticky="nsew")
             tipos = {}
             for ruta in self.archivos.values():
                 cat = self._categoria_de(ruta) or "otros"

@@ -1,4 +1,4 @@
 # SHA-256 de los archivos de BPT Converter 1.2
 #
-9c3398f53641e495f65f688a53668bbef99e9edd1daaa132ec414eebe4d6aca1  Instalador_ConvertidorFormatos_1.2.exe
-11934cca6728121a6bb2febcfd7cc5b267e8f43f7dd9f57ac8bf7632dceffcb1  ConvertidorFormatos_Portable.exe
+98c0b8d6ad23b719757f5cff8003c5b745b5db180a68ecc22b47a3dc9efacad9  Instalador_ConvertidorFormatos_1.2.exe
+7a842beea3f999832f9bd4b2e976e4307f56670535f32362c2b61d5b95b663b4  ConvertidorFormatos_Portable.exe
