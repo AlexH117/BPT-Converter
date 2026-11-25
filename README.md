@@ -134,7 +134,7 @@ Salida en `dist/`:
 3. Selecciona `mode: universal`.
 4. Descarga el artifact `BPTConverter-macOS-universal2`.
 
-El workflow compila en `macos-13` (x86_64) y `macos-14` (arm64), fusiona binarios Mach-O con `lipo` y genera el DMG universal.
+El workflow compila en `macos-15-intel` (x86_64) y `macos-15` (arm64), fusiona binarios Mach-O con `lipo` y genera el DMG universal.
 
 #### Opción B: Compilación local en macOS
 
