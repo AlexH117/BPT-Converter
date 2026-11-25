@@ -21,16 +21,27 @@ WINDOWS
 
 macOS
 -----
-- El código ya incluye soporte macOS (rutas, apertura de archivos, FFmpeg,
-  lanzadores y script de compilación).
-- PyInstaller NO puede generar apps macOS desde Windows. Para obtener
-  `BPT Converter.app` / `.dmg`, compila en macOS:
+1) VERSIÓN UNIVERSAL (RECOMENDADA)
+   Archivo: BPTConverter-macOS-universal2.zip
+
+   - Funciona en Mac Intel y Apple Silicon.
+   - Dentro del ZIP están `BPT Converter.app`, el `.dmg` y la versión portable.
+   - Descomprime, abre el `.dmg` o arrastra `BPT Converter.app` a Aplicaciones.
+
+2) VERSIONES POR ARQUITECTURA (OPCIONALES)
+   Archivos:
+     BPTConverter-macOS-arm64.zip     (Apple Silicon)
+     BPTConverter-macOS-x86_64.zip    (Mac Intel)
+
+   - Se proporcionan solo como alternativa más ligera.
+   - Si no sabes qué arquitectura tienes, usa la universal.
+
+Notas:
+- Para uso interno/pruebas, si macOS bloquea la app, haz clic derecho → Abrir.
+- Para distribución pública, firma y notariza con Apple Developer.
+- Para recompilar, usa `.github/workflows/build-macos.yml` o en macOS:
     ./instalar_macos.sh --build
     .venv/bin/python compilar_macos.py
-- También puedes usar el workflow de GitHub Actions incluido en
-  `.github/workflows/build-macos.yml` en un runner macos-latest.
-- Para distribución pública en Mac, firma y notariza la app con Apple
-  Developer (requiere macOS).
 
 REQUISITOS
 ----------

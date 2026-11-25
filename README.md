@@ -174,7 +174,28 @@ Para compilar en GitHub Actions (macOS) basta con incluir:
 - `requirements.txt`
 - `icono.icns`, `icono.ico`, `logo_bpt.png`, `logo_bpt_40.png`, `LEEME.txt`
 
-No subas: `.venv/`, `__pycache__/`, `build/`, `build_macos/`, `dist/`, `dist_macos/`, `errores.log`.
+No subas: `.venv/`, `__pycache__/`, `build/`, `build_macos/`, `dist/`, `dist_macos/`, `errores.log`, ni los ZIP/DMG de `ENTREGA/` (van en Releases).
+
+## Publicar los instaladores en Releases
+
+Los archivos grandes se publican como **assets del Release**, no como archivos del repositorio. La estructura recomendada es plana:
+
+```text
+BPT Converter 1.2.0
+├── Instalador_ConvertidorFormatos_1.2.exe
+├── ConvertidorFormatos_Portable.exe
+├── BPTConverter-macOS-universal2.zip   # recomendado para Mac
+├── BPTConverter-macOS-arm64.zip        # opcional, Apple Silicon
+├── BPTConverter-macOS-x86_64.zip       # opcional, Mac Intel
+├── SHA256SUMS.txt
+└── LEEME_PRIMERO.txt
+```
+
+El ZIP universal contiene `BPT Converter.app`, el `.dmg` y la versión portable. Para verificar, ejecuta en la carpeta donde descargaste los archivos:
+
+```powershell
+ Get-FileHash "BPTConverter-macOS-universal2.zip" -Algorithm SHA256
+```
 
 ## Solución de problemas
 

@@ -26,3 +26,8 @@ desktop.ini
 # Archivos temporales
 *.tmp
 *.temp
+
+# Artefactos grandes: publicar en Releases, no subir al repo
+ENTREGA/*.zip
+ENTREGA/*.dmg
+ENTREGA/*.app
